@@ -1,42 +1,36 @@
 {% extends 'base/layout.html' %}
-{% load static tour_tags %}
+{% load static %}
 {% block title %}Virtual Tour — {{ tour.parent }}{% endblock %}
 
-{% block extra_head %}
-<meta name="htmx-config" content='{"boosting":false}'>
-<link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/bootstrap.min.css' %}">
+{% block content %}
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/psv-bundle.css' %}">
 <style>
-  body { background: #000; }
-  main.container { max-width: none !important; padding: 0 !important; }
   #viewer {
     position: fixed;
-    top: 56px; left: 0; right: 0; bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: #000;
+    z-index: 1040;
   }
   .viewer-toolbar {
-    position: fixed; top: 70px; right: 14px; z-index: 100;
-    display: flex; gap: 8px;
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 1050;
+    display: flex;
+    gap: 8px;
   }
-  .viewer-toolbar .btn { backdrop-filter: blur(4px); }
 </style>
-{% endblock %}
 
-{% block content %}
 <div id="viewer"></div>
 <div class="viewer-toolbar">
   {% if can_edit %}
-    <a class="btn btn-light btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">Edit</a>
+    <a class="btn btn-light btn-sm" href="{{ url_edit }}">Edit</a>
   {% endif %}
-  <a class="btn btn-light btn-sm" href="{% if tour.parent %}{{ tour.parent.get_absolute_url }}{% else %}/{% endif %}">Close</a>
+  <a class="btn btn-light btn-sm" href="{{ url_back }}">Close</a>
 </div>
-{% endblock %}
 
-{% block extra_body %}
 <script src="{% static 'netbox_virtual_tour/vendor/psv-bundle.js' %}"></script>
 <script>
 const { Viewer, MarkersPlugin, VirtualTourPlugin, MapPlugin } = PhotoSphereViewer;
-
 const DATA_URL = '{{ data_url }}';
 
 async function init() {
@@ -70,12 +64,6 @@ async function init() {
   const firstScene = data.scenes[0];
   const hasFloorplan = !!data.floorplan_url;
 
-  // floorplan_rotation is stored in degrees = the yaw the editor was facing
-  // when they clicked "Set Compass Direction" (i.e. "this direction is floorplan up").
-  // Map plugin computes cone angle as (yaw + rotation). For the cone to point
-  // "up" when the viewer is facing that same direction D:
-  //   D + rotation = 0  →  rotation = -D
-  // So we negate.
   function rotationRad(scene) {
     return -((scene.floorplan_rotation || 0) * Math.PI / 180);
   }
@@ -86,15 +74,7 @@ async function init() {
       renderMode: 'markers',
       nodes,
       startNodeId: String(firstScene.id),
-      // transition:false = instant texture swap with no camera animation.
-      // We do our own smooth animate() in node-changed below, which gives
-      // a clean snap to the saved default view without any spin or jarring
-      // geometry pre-rotation.
-      transitionOptions: {
-        showLoader: true,
-        fadeIn: false,
-        rotation: false,
-      },
+      transitionOptions: { showLoader: true, fadeIn: false, rotation: false },
     }],
   ];
 
@@ -111,12 +91,7 @@ async function init() {
       position: 'bottom left',
       coneColor: 'rgba(0, 120, 255, 0.35)',
       coneSize: 40,
-      spotStyle: {
-        size: 18,
-        color: 'rgba(0, 90, 255, 0.9)',
-        hoverColor: 'rgba(0, 90, 255, 1)',
-        hoverSize: 22,
-      },
+      spotStyle: { size: 18, color: 'rgba(0,90,255,0.9)', hoverColor: 'rgba(0,90,255,1)' },
     }]);
   }
 
@@ -134,24 +109,11 @@ async function init() {
   tourPlugin.addEventListener('node-changed', ({ node }) => {
     const scene = sceneById[node.id];
     if (!scene) return;
-
-    // Smoothly animate to the saved default view. Speed '8rpm' is fast
-    // enough to feel immediate but smooth enough not to jar.
-    viewer.animate({
-      yaw: scene.default_yaw,
-      pitch: scene.default_pitch,
-      speed: '8rpm',
-    });
-
+    viewer.animate({ yaw: scene.default_yaw, pitch: scene.default_pitch, speed: '8rpm' });
     if (map) {
-      map.setImage(
-        data.floorplan_url,
-        {
-          x: scene.floorplan_x * data.floorplan_width,
-          y: scene.floorplan_y * data.floorplan_height,
-        },
-        rotationRad(scene),
-      );
+      map.setImage(data.floorplan_url,
+        { x: scene.floorplan_x * data.floorplan_width, y: scene.floorplan_y * data.floorplan_height },
+        rotationRad(scene));
     }
   });
 
@@ -174,4 +136,4 @@ init().catch(err => {
     '<div style="color:#fff;padding:2rem;">Error: ' + err.message + '</div>';
 });
 </script>
-{% endblock %}
+{% endblock content %}

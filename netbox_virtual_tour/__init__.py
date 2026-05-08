@@ -6,7 +6,7 @@ try:
         verbose_name = 'Virtual Tour'
         description = '360-degree virtual tours for Sites and Locations'
         version = '0.1.0'
-        author = 'ds2600'
+        author = 'Your Name'
         base_url = 'virtual-tour'
         min_version = '4.0.0'
         default_settings = {}

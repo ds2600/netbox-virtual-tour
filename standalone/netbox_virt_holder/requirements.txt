@@ -1,4 +1,0 @@
-# Standalone development dependencies.
-Django>=4.2,<5.0
-djangorestframework>=3.14
-Pillow>=10.0
