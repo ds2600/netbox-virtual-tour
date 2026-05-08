@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-virtual-tour"
+version = "0.1.0"
+description = "360-degree virtual tours for NetBox Sites and Locations"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "Pillow>=10.0",
+]
+
+[project.urls]
+Repository = "https://github.com/YOUR_USERNAME/netbox-virtual-tour"
+
+[tool.setuptools.packages.find]
+# Only package the plugin itself, not standalone/ or smoke_test.py
+include = ["netbox_virtual_tour*"]
+
+[tool.setuptools.package-data]
+netbox_virtual_tour = [
+    "templates/**/*",
+    "static/**/*",
+    "migrations/*.py",
+]

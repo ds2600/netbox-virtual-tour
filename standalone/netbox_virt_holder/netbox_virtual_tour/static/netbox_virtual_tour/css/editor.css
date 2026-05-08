@@ -1,0 +1,219 @@
+/* Editor layout: header on top, sidebar + main below. */
+.editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+  margin: -1.5rem -12px;  /* cancel bootstrap container padding */
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  flex-shrink: 0;
+}
+
+.editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.sidebar-section { margin-bottom: 1.5rem; }
+
+.scene-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.scene-list li {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scene-list li:hover { background: #f1f3f5; }
+.scene-list li.active { background: #cfe2ff; border-color: #9ec5fe; }
+
+.scene-list .scene-thumb {
+  width: 32px; height: 32px; border-radius: 3px; object-fit: cover;
+  background: #dee2e6;
+}
+
+.editor-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.editor-section {
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-header {
+  margin-bottom: 0.75rem;
+}
+
+/* Floorplan canvas: the floorplan image with absolutely-positioned
+   draggable scene markers on top. */
+#floorplan-canvas-wrap {
+  background: #f8f9fa;
+  border: 1px dashed #adb5bd;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 500px;
+}
+
+.floorplan-canvas {
+  position: relative;
+  display: inline-block;
+  min-width: 100%;
+  min-height: 320px;
+}
+
+.floorplan-canvas img.floorplan-img {
+  display: block;
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.floorplan-empty {
+  padding: 5rem 1rem;
+  text-align: center;
+  width: 100%;
+}
+
+/* Scene marker on the floorplan.
+   Structure: flex column, cone SVG on top, numbered square below.
+   The whole marker rotates via transform:rotate() to show direction.
+   transform-origin is at the centre of the square body. */
+.scene-marker {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* cone is 18px tall, body is 28px tall, so centre of body = 18+14 = 32px from top */
+  transform-origin: center 32px;
+  margin-left: -14px;  /* half of body width */
+  margin-top: -46px;   /* cone height (18) + body height (28) */
+  cursor: grab;
+  user-select: none;
+}
+
+.scene-marker.dragging { cursor: grabbing; opacity: 0.75; }
+
+/* The cone SVG — polygon points up in local space */
+.scene-marker .marker-cone {
+  width: 20px;
+  height: 18px;
+  display: block;
+  pointer-events: none;
+}
+
+/* Grey cone when compass not set, blue when set, green when selected */
+.scene-marker .marker-cone polygon         { fill: rgba(120, 120, 120, 0.5); }
+.scene-marker.compass-set .marker-cone polygon { fill: rgba(13, 110, 253, 0.85); }
+.scene-marker.active .marker-cone polygon  { fill: rgba(25, 135, 84, 0.9); }
+
+/* The numbered square body */
+.marker-body {
+  width: 28px;
+  height: 28px;
+  background: #0d6efd;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scene-marker.active .marker-body { background: #198754; border-color: #c3e6cb; }
+
+/* Compass-aim button — pulses amber while waiting for confirm click */
+#btn-set-compass.aiming {
+  background: #fd7e14;
+  border-color: #fd7e14;
+  color: #fff;
+  animation: pulse-amber 1.2s ease-in-out infinite;
+}
+#btn-set-compass.aiming:hover { background: #e96b00; border-color: #e96b00; }
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.55); }
+  50%       { box-shadow: 0 0 0 7px rgba(253,126,20,0); }
+}
+
+/* Scene editor (PSV pane). */
+#psv-editor {
+  height: 480px;
+  background: #000;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.scene-editor-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.link-list { list-style: none; padding: 0; margin: 0; }
+.link-list li {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Link marker on the PSV viewer (custom marker style). */
+.psv-link-marker {
+  background: rgba(13, 110, 253, 0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Toast for ephemeral messages. */
+.editor-toast {
+  position: fixed; bottom: 1rem; right: 1rem;
+  background: #212529; color: #fff;
+  padding: 0.6rem 1rem; border-radius: 4px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  opacity: 0; transition: opacity 0.2s;
+}
+.editor-toast.show { opacity: 1; }
+.editor-toast.error { background: #dc3545; }
