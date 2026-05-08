@@ -1,9 +1,10 @@
-/* Editor layout: header on top, sidebar + main below. */
+/* Use NetBox's CSS variables so we inherit light/dark theme correctly. */
+
 .editor-shell {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 56px);
-  margin: -1.5rem -12px;  /* cancel bootstrap container padding */
+  margin: -1.5rem -12px;
 }
 
 .editor-header {
@@ -11,76 +12,75 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: #fff;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--nbx-body-bg, var(--bs-body-bg));
+  color: var(--bs-body-color);
+  border-bottom: 1px solid var(--bs-border-color);
   flex-shrink: 0;
 }
 
-.editor-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
+.editor-body { display: flex; flex: 1; min-height: 0; }
 
 .editor-sidebar {
   width: 280px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #dee2e6;
+  background: var(--nbx-body-bg, var(--bs-body-bg));
+  color: var(--bs-body-color);
+  border-right: 1px solid var(--bs-border-color);
   overflow-y: auto;
   padding: 1rem;
 }
 
 .sidebar-section { margin-bottom: 1.5rem; }
 
-.scene-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+.scene-list { list-style: none; padding: 0; margin: 0; }
 
 .scene-list li {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   margin-bottom: 0.25rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--bs-body-color);
+  background: var(--bs-tertiary-bg);
 }
 
-.scene-list li:hover { background: #f1f3f5; }
-.scene-list li.active { background: #cfe2ff; border-color: #9ec5fe; }
+.scene-list li:hover { background: var(--bs-secondary-bg); }
+.scene-list li.active {
+  background: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary);
+  color: var(--bs-emphasis-color);
+}
 
 .scene-list .scene-thumb {
   width: 32px; height: 32px; border-radius: 3px; object-fit: cover;
-  background: #dee2e6;
+  background: var(--bs-secondary-bg);
 }
 
 .editor-main {
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.5rem;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
 .editor-section {
-  background: #fff;
+  background: var(--nbx-body-bg, var(--bs-body-bg));
   border-radius: 6px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--bs-border-color);
   padding: 1rem;
   margin-bottom: 1rem;
+  color: var(--bs-body-color);
 }
 
-.section-header {
-  margin-bottom: 0.75rem;
-}
+.section-header { margin-bottom: 0.75rem; }
 
-/* Floorplan canvas: the floorplan image with absolutely-positioned
-   draggable scene markers on top. */
 #floorplan-canvas-wrap {
-  background: #f8f9fa;
-  border: 1px dashed #adb5bd;
+  background: var(--bs-tertiary-bg);
+  border: 1px dashed var(--bs-border-color);
   border-radius: 4px;
   overflow: auto;
   max-height: 500px;
@@ -100,32 +100,22 @@
   -webkit-user-drag: none;
 }
 
-.floorplan-empty {
-  padding: 5rem 1rem;
-  text-align: center;
-  width: 100%;
-}
+.floorplan-empty { padding: 5rem 1rem; text-align: center; width: 100%; }
 
-/* Scene marker on the floorplan.
-   Structure: flex column, cone SVG on top, numbered square below.
-   The whole marker rotates via transform:rotate() to show direction.
-   transform-origin is at the centre of the square body. */
+/* Scene markers on floorplan */
 .scene-marker {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* cone is 18px tall, body is 28px tall, so centre of body = 18+14 = 32px from top */
   transform-origin: center 32px;
-  margin-left: -14px;  /* half of body width */
-  margin-top: -46px;   /* cone height (18) + body height (28) */
+  margin-left: -14px;
+  margin-top: -46px;
   cursor: grab;
   user-select: none;
 }
-
 .scene-marker.dragging { cursor: grabbing; opacity: 0.75; }
 
-/* The cone SVG — polygon points up in local space */
 .scene-marker .marker-cone {
   width: 20px;
   height: 18px;
@@ -133,16 +123,14 @@
   pointer-events: none;
 }
 
-/* Grey cone when compass not set, blue when set, green when selected */
 .scene-marker .marker-cone polygon         { fill: rgba(120, 120, 120, 0.5); }
 .scene-marker.compass-set .marker-cone polygon { fill: rgba(13, 110, 253, 0.85); }
 .scene-marker.active .marker-cone polygon  { fill: rgba(25, 135, 84, 0.9); }
 
-/* The numbered square body */
 .marker-body {
   width: 28px;
   height: 28px;
-  background: #0d6efd;
+  background: var(--bs-primary);
   border: 2px solid #fff;
   border-radius: 4px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.35);
@@ -156,23 +144,24 @@
 
 .scene-marker.active .marker-body { background: #198754; border-color: #c3e6cb; }
 
-/* Compass-aim button — pulses amber while waiting for confirm click */
-#btn-set-compass.aiming {
+/* Both pulsing buttons (compass + default view in aim mode) */
+#btn-set-compass.aiming,
+#btn-set-default-view.aiming {
   background: #fd7e14;
   border-color: #fd7e14;
   color: #fff;
   animation: pulse-amber 1.2s ease-in-out infinite;
 }
-#btn-set-compass.aiming:hover { background: #e96b00; border-color: #e96b00; }
 
 @keyframes pulse-amber {
   0%, 100% { box-shadow: 0 0 0 0 rgba(253,126,20,0.55); }
   50%       { box-shadow: 0 0 0 7px rgba(253,126,20,0); }
 }
 
-/* Scene editor (PSV pane). */
+/* Made the PSV editor much taller */
 #psv-editor {
-  height: 480px;
+  height: 70vh;
+  min-height: 600px;
   background: #000;
   border-radius: 4px;
   margin-bottom: 1rem;
@@ -188,15 +177,16 @@
 .link-list { list-style: none; padding: 0; margin: 0; }
 .link-list li {
   padding: 0.4rem 0.75rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--bs-border-color);
   border-radius: 4px;
   margin-bottom: 0.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
 }
 
-/* Link marker on the PSV viewer (custom marker style). */
 .psv-link-marker {
   background: rgba(13, 110, 253, 0.85);
   color: #fff;
@@ -206,7 +196,6 @@
   white-space: nowrap;
 }
 
-/* Toast for ephemeral messages. */
 .editor-toast {
   position: fixed; bottom: 1rem; right: 1rem;
   background: #212529; color: #fff;
@@ -217,3 +206,24 @@
 }
 .editor-toast.show { opacity: 1; }
 .editor-toast.error { background: #dc3545; }
+
+/* Default-view aim overlay (same style as compass overlay) */
+#default-view-aim-overlay {
+  display: none;
+  position: absolute; inset: 0; z-index: 10;
+  pointer-events: none;
+  border: 3px solid #fd7e14;
+  border-radius: 4px;
+}
+#default-view-aim-overlay .msg {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(253,126,20,0.92);
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  pointer-events: none;
+}

@@ -15,7 +15,8 @@
     psvViewer: null,
     psvMarkers: null,
     pendingLinkPosition: null,
-    compassAiming: false,   // true while waiting for user to confirm compass direction
+    compassAiming: false,
+    defaultViewAiming: false,
   };
 
   // ---- helpers ----
@@ -65,11 +66,17 @@
   }
 
   // ---- modal ----
-  let _linkModal = null;
-  function getLinkModal() {
-    if (!_linkModal) _linkModal = new bootstrap.Modal(qs('#linkPickerModal'));
-    return _linkModal;
-  }
+    let _linkModal = null;
+    function getLinkModal() {
+      // bootstrap is exposed by NetBox as window.bootstrap. Guard against it being missing.
+      const bs = window.bootstrap;
+      if (!bs || !bs.Modal) {
+        toast('Bootstrap not loaded — link picker unavailable', true);
+        return null;
+      }
+      if (!_linkModal) _linkModal = new bs.Modal(qs('#linkPickerModal'));
+      return _linkModal;
+    }
 
   // ---- init ----
   async function init() {
@@ -264,6 +271,7 @@
     state.selectedSceneId = sceneId;
     // Cancel any in-progress compass aiming when switching scenes
     if (state.compassAiming) cancelCompassAim();
+    if (state.defaultViewAiming) cancelDefaultViewAim();
     renderSceneList();
     renderSceneEditor();
     qsa('.scene-marker').forEach(function (m) {
@@ -374,21 +382,50 @@
   }
 
   // ---- toolbar actions ----
-  async function setDefaultView() {
-    const scene = getScene(state.selectedSceneId);
-    if (!scene || !state.psvViewer) return;
-    const pos = state.psvViewer.getPosition();
-    scene.default_yaw = pos.yaw;
-    scene.default_pitch = pos.pitch;
-    await persistScene(scene, ['default_yaw', 'default_pitch']);
-    toast('Default view saved');
-  }
+    function startDefaultViewAim() {
+      state.defaultViewAiming = true;
+      const btn = qs('#btn-set-default-view');
+      btn.textContent = 'Confirm View';
+      btn.classList.add('aiming');
+      qs('#default-view-aim-overlay').style.display = '';
+    }
+
+    function cancelDefaultViewAim() {
+      state.defaultViewAiming = false;
+      const btn = qs('#btn-set-default-view');
+      if (btn) {
+        btn.textContent = 'Set Default View';
+        btn.classList.remove('aiming');
+      }
+      const ov = qs('#default-view-aim-overlay');
+      if (ov) ov.style.display = 'none';
+    }
+
+    async function handleDefaultViewClick() {
+      if (!state.defaultViewAiming) {
+        // Cancel compass aim if active
+        if (state.compassAiming) cancelCompassAim();
+        if (state.defaultViewAiming) cancelDefaultViewAim();
+        startDefaultViewAim();
+        return;
+      }
+      if (!state.psvViewer) { cancelDefaultViewAim(); return; }
+      const scene = getScene(state.selectedSceneId);
+      if (!scene) { cancelDefaultViewAim(); return; }
+      const pos = state.psvViewer.getPosition();
+      scene.default_yaw = pos.yaw;
+      scene.default_pitch = pos.pitch;
+      cancelDefaultViewAim();
+      await persistScene(scene, ['default_yaw', 'default_pitch']);
+      toast('Default view saved');
+    }
 
   function addLinkAtCurrentView() {
     const scene = getScene(state.selectedSceneId);
     if (!scene || !state.psvViewer) return;
     // Cancel compass aiming if active
     if (state.compassAiming) cancelCompassAim();
+    if (state.defaultViewAiming) cancelDefaultViewAim();
     const others = state.tour.scenes.filter(function (s) {
       return String(s.id) !== String(scene.id);
     });
@@ -402,10 +439,15 @@
       btn.type = 'button';
       btn.className = 'list-group-item list-group-item-action';
       btn.textContent = s.name;
-      btn.addEventListener('click', function () { getLinkModal().hide(); confirmLink(s.id); });
+        btn.addEventListener('click', function () {
+          const m = getLinkModal();
+          if (m) m.hide();
+          confirmLink(s.id);
+        });
       list.appendChild(btn);
     });
-    getLinkModal().show();
+    const m = getLinkModal();
+    if (m) m.show();
   }
 
   async function confirmLink(targetSceneId) {
@@ -523,7 +565,7 @@
       try {
         const fd = new FormData(); fd.append('floorplan', file);
         const result = await api(cfg.urls.floorplan, { method: 'POST', body: fd });
-        state.tour.floorplan_url = result.floorplan_url;
+        state.tour.floorplan_url = result.floorplan_url + '?t=' + Date.now();
         state.tour.floorplan_width = result.floorplan_width;
         state.tour.floorplan_height = result.floorplan_height;
         renderFloorplan();
@@ -550,7 +592,7 @@
     });
 
     qs('#btn-set-default-view').addEventListener('click', function () {
-      setDefaultView().catch(function (err) { toast(err.message, true); });
+      handleDefaultViewClick().catch(function (err) { toast(err.message, true); });
     });
     qs('#btn-set-compass').addEventListener('click', function () {
       handleCompassClick().catch(function (err) { toast(err.message, true); });
