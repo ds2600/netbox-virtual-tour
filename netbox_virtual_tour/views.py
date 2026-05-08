@@ -18,7 +18,7 @@ import os
 import zipfile
 from datetime import datetime, timezone
 
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import permission_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.http import (
@@ -30,6 +30,26 @@ from django.views.decorators.http import require_http_methods, require_POST
 from PIL import Image
 
 from .models import Scene, SceneLink, VirtualTour
+
+
+# ---------------------------------------------------------------------------
+# Auth helper
+# ---------------------------------------------------------------------------
+
+def _require_login(view_func):
+    """Replacement for @login_required that works in both NetBox and
+    standalone. NetBox uses /login/ not /accounts/login/, so we raise
+    a 403 for unauthenticated requests and let NetBox's middleware handle
+    the redirect. In standalone the admin login handles it."""
+    from functools import wraps
+    from django.core.exceptions import PermissionDenied
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +87,7 @@ def _resolve_object_type(object_type):
 # Entry point — link from Site/Location detail pages
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 def tour_edit_redirect(request, object_type, object_id):
     """Get-or-create a tour for the given object, then redirect to
@@ -88,7 +108,7 @@ def tour_edit_redirect(request, object_type, object_id):
 # Viewer
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 def tour_view(request, pk):
     tour = get_object_or_404(VirtualTour, pk=pk)
     if not _can_view(request.user, tour):
@@ -104,7 +124,7 @@ def tour_view(request, pk):
 # Editor
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 def tour_edit(request, pk):
     tour = get_object_or_404(VirtualTour, pk=pk)
@@ -118,7 +138,7 @@ def tour_edit(request, pk):
 # Tour-level APIs
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 def tour_api(request, pk):
     """Return the tour data as JSON. Used by both editor (live
     state) and viewer (published snapshot)."""
@@ -139,7 +159,7 @@ def tour_api(request, pk):
     return JsonResponse(tour.published_data)
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def tour_floorplan_upload(request, pk):
@@ -169,7 +189,7 @@ def tour_floorplan_upload(request, pk):
     })
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def tour_publish(request, pk):
@@ -182,7 +202,7 @@ def tour_publish(request, pk):
     return JsonResponse({'status': 'published', 'published_at': tour.published_at.isoformat()})
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.delete_virtualtour', raise_exception=True)
 @require_POST
 def tour_delete(request, pk):
@@ -193,7 +213,7 @@ def tour_delete(request, pk):
     return JsonResponse({'redirect': parent_url})
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.view_virtualtour', raise_exception=True)
 def tour_export(request, pk):
     """Bundle the entire tour into a zip:
@@ -264,7 +284,7 @@ def tour_export(request, pk):
 # Scene APIs
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def scene_create(request, pk):
@@ -293,7 +313,7 @@ def scene_create(request, pk):
     })
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_http_methods(['POST'])
 def scene_detail(request, pk):
@@ -315,7 +335,7 @@ def scene_detail(request, pk):
     return JsonResponse({'ok': True})
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def scene_delete(request, pk):
@@ -328,7 +348,7 @@ def scene_delete(request, pk):
 # Link APIs
 # ---------------------------------------------------------------------------
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def link_create(request, pk):
@@ -363,7 +383,7 @@ def link_create(request, pk):
     })
 
 
-@login_required
+@_require_login
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 @require_POST
 def link_delete(request, pk):

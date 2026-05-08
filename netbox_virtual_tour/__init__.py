@@ -1,45 +1,36 @@
 """
 NetBox Virtual Tour Plugin
 
-Provides 360-degree virtual tours for Sites and Locations using
-PhotoSphereViewer. Editors can author tours with a drag-and-drop
-floorplan editor; viewers see a Street View-style experience.
+Provides 360-degree virtual tours for NetBox Sites and Locations.
 
-Designed to run both as a NetBox plugin AND as a standalone Django
-app for development. The standalone mode is enabled by setting
-NETBOX_VIRTUAL_TOUR_STANDALONE = True in Django settings (the
-included `standalone/settings.py` sets this automatically).
+Runs as a NetBox plugin (production) or a standalone Django app
+(development). Set NETBOX_VIRTUAL_TOUR_STANDALONE=True in Django
+settings to enable standalone mode — the included standalone/
+directory does this automatically.
 """
 from django.conf import settings
 
-# Detect whether we're running standalone or inside NetBox.
-# This flag controls which Site/Location models we link to.
 STANDALONE = getattr(settings, 'NETBOX_VIRTUAL_TOUR_STANDALONE', False)
 
 if STANDALONE:
+    # Standalone dev mode — use the plain AppConfig
     default_app_config = 'netbox_virtual_tour.apps.StandaloneAppConfig'
+
 else:
-    # NetBox plugin entry point. NetBox discovers plugins by looking
-    # for a `config` attribute that subclasses PluginConfig.
-    try:
-        from netbox.plugins import PluginConfig
+    # NetBox plugin mode.
+    # NetBox discovers this plugin via the `config` attribute below.
+    # It auto-discovers template_content.py, navigation.py, etc. by
+    # convention — do NOT declare them as class attributes here.
+    from netbox.plugins import PluginConfig
 
-        class NetBoxVirtualTourConfig(PluginConfig):
-            name = 'netbox_virtual_tour'
-            verbose_name = 'Virtual Tour'
-            description = '360-degree virtual tours for Sites and Locations'
-            version = '0.1.0'
-            author = 'Your Name'
-            base_url = 'virtual-tour'
-            min_version = '4.0.0'
-            default_settings = {}
-            # Tell NetBox which file contains the PluginTemplateExtension
-            # classes that inject the tour CTA into Site/Location pages.
-            template_extensions = 'netbox_virtual_tour.template_content'
+    class NetBoxVirtualTourConfig(PluginConfig):
+        name = 'netbox_virtual_tour'
+        verbose_name = 'Virtual Tour'
+        description = '360-degree virtual tours for Sites and Locations'
+        version = '0.1.0'
+        author = 'Your Name'
+        base_url = 'virtual-tour'
+        min_version = '4.0.0'
+        default_settings = {}
 
-        config = NetBoxVirtualTourConfig
-    except ImportError:
-        # NetBox not installed and not running standalone — likely
-        # importing for tooling (migrations, shell, etc). Fall back
-        # to the standalone app config.
-        default_app_config = 'netbox_virtual_tour.apps.StandaloneAppConfig'
+    config = NetBoxVirtualTourConfig
