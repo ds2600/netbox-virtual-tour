@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static tour_tags %}
 {% block title %}Virtual Tour — {{ tour.parent }}{% endblock %}
 
 {% block extra_head %}
@@ -25,7 +25,7 @@
 <div id="viewer"></div>
 <div class="viewer-toolbar">
   {% if can_edit %}
-    <a class="btn btn-light btn-sm" href="{% url 'netbox_virtual_tour:tour_edit' pk=tour.pk %}">Edit</a>
+    <a class="btn btn-light btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">Edit</a>
   {% endif %}
   <a class="btn btn-light btn-sm" href="{% if tour.parent %}{{ tour.parent.get_absolute_url }}{% else %}/{% endif %}">Close</a>
 </div>

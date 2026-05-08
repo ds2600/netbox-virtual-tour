@@ -32,6 +32,18 @@ from PIL import Image
 from .models import Scene, SceneLink, VirtualTour
 
 
+def _tour_reverse(viewname, **kwargs):
+    """Reverse a URL in either NetBox ('plugins:netbox_virtual_tour:x')
+    or standalone ('netbox_virtual_tour:x') mode."""
+    from django.urls import NoReverseMatch
+    for ns in ('plugins:netbox_virtual_tour', 'netbox_virtual_tour'):
+        try:
+            return reverse(f'{ns}:{viewname}', kwargs=kwargs or None)
+        except NoReverseMatch:
+            continue
+    raise NoReverseMatch(f"Cannot reverse '{viewname}' in any known namespace")
+
+
 # ---------------------------------------------------------------------------
 # Auth helper
 # ---------------------------------------------------------------------------
@@ -101,7 +113,7 @@ def tour_edit_redirect(request, object_type, object_id):
     tour, _created = VirtualTour.objects.get_or_create(
         content_type=ct, object_id=object_id,
     )
-    return redirect('netbox_virtual_tour:tour_edit', pk=tour.pk)
+    return redirect(_tour_reverse('tour_edit', pk=tour.pk))
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +128,7 @@ def tour_view(request, pk):
     return render(request, 'netbox_virtual_tour/viewer.html', {
         'tour': tour,
         'can_edit': _can_edit(request.user, tour),
-        'data_url': reverse('netbox_virtual_tour:tour_api', kwargs={'pk': tour.pk}),
+        'data_url': _tour_reverse('tour_api', pk=tour.pk),
     })
 
 
@@ -130,7 +142,7 @@ def tour_edit(request, pk):
     tour = get_object_or_404(VirtualTour, pk=pk)
     return render(request, 'netbox_virtual_tour/editor.html', {
         'tour': tour,
-        'data_url': reverse('netbox_virtual_tour:tour_api', kwargs={'pk': tour.pk}),
+        'data_url': _tour_reverse('tour_api', pk=tour.pk),
     })
 
 

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static tour_tags %}
 {% block title %}Edit Tour — {{ tour.parent }}{% endblock %}
 
 {% block extra_head %}
@@ -146,15 +146,14 @@ window.TOUR_CONFIG = {
   dataUrl: '{{ data_url }}',
   csrfToken: document.querySelector('input[name=csrfmiddlewaretoken]').value,
   urls: {
-    floorplan: '{% url "netbox_virtual_tour:tour_floorplan_upload" pk=tour.pk %}',
-    sceneCreate: '{% url "netbox_virtual_tour:scene_create" pk=tour.pk %}',
-    publish: '{% url "netbox_virtual_tour:tour_publish" pk=tour.pk %}',
-    export: '{% url "netbox_virtual_tour:tour_export" pk=tour.pk %}',
-    deleteTour: '{% url "netbox_virtual_tour:tour_delete" pk=tour.pk %}',
-    // These use a base + id pattern — we pass sentinel URLs and strip the trailing segment in JS
-    sceneDetailBase: '{% url "netbox_virtual_tour:scene_detail" pk=0 %}'.replace('/0/', '/'),
-    linkCreateBase: '{% url "netbox_virtual_tour:link_create" pk=0 %}'.replace('/0/', '/'),
-    linkDeleteBase: '{% url "netbox_virtual_tour:link_delete" pk=0 %}'.replace('/0/', '/'),
+    floorplan: '{% tour_url "tour_floorplan_upload" pk=tour.pk %}',
+    sceneCreate: '{% tour_url "scene_create" pk=tour.pk %}',
+    publish: '{% tour_url "tour_publish" pk=tour.pk %}',
+    export: '{% tour_url "tour_export" pk=tour.pk %}',
+    deleteTour: '{% tour_url "tour_delete" pk=tour.pk %}',
+    sceneDetailBase: '{% tour_url "scene_detail" pk=0 %}'.replace('/0/', '/'),
+    linkCreateBase: '{% tour_url "link_create" pk=0 %}'.replace('/0/', '/'),
+    linkDeleteBase: '{% tour_url "link_delete" pk=0 %}'.replace('/0/', '/'),
   },
 };
 </script>
