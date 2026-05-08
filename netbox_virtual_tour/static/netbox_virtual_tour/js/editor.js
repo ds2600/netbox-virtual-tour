@@ -196,8 +196,7 @@
       marker.style.left = (pct * 100) + '%';
       marker.style.top = '50%';
     }
-    // Rotate the whole marker (body + cone) to reflect floorplan_rotation
-    marker.style.transform = 'rotate(' + (scene.floorplan_rotation || 0) + 'deg)';
+    marker.style.transform = '';
   }
 
   function updateMarkerRotation(sceneId) {
@@ -205,7 +204,6 @@
     if (!scene) return;
     const marker = qs('.scene-marker[data-scene-id="' + sceneId + '"]');
     if (!marker) return;
-    marker.style.transform = 'rotate(' + (scene.floorplan_rotation || 0) + 'deg)';
     if (scene.floorplan_rotation) {
       marker.classList.add('compass-set');
     } else {
@@ -383,7 +381,7 @@
       const btn = qs('#btn-set-default-view');
       btn.textContent = 'Confirm View';
       btn.classList.add('aiming');
-      qs('#default-view-aim-overlay').style.display = '';
+      qs('#default-view-aim-overlay').style.display = 'block';
     }
 
     function cancelDefaultViewAim() {
@@ -625,6 +623,29 @@ async function confirmLinkPlacement() {
 
   // ---- global events ----
   function bindGlobalEvents() {
+    qs('#bundle-import').addEventListener('change', async function (e) {
+      const file = e.target.files[0]; if (!file) return;
+      if (!confirm('Importing will REPLACE all existing scenes, links, and the floorplan in this tour. Continue?')) {
+        e.target.value = '';
+        return;
+      }
+      showProgress('Importing bundle (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)…');
+      try {
+        const fd = new FormData();
+        fd.append('bundle', file);
+        const result = await api(cfg.urls.import, { method: 'POST', body: fd });
+        toast('Imported ' + result.scenes_imported + ' scene(s)');
+        // Reload everything from server
+        state.tour = await api(cfg.dataUrl);
+        state.selectedSceneId = null;
+        renderAll();
+      } catch (err) {
+        toast(err.message, true);
+      } finally {
+        hideProgress();
+        e.target.value = '';
+      }
+    });
     qs('#floorplan-upload').addEventListener('change', async function (e) {
       const file = e.target.files[0]; if (!file) return;
       showProgress('Uploading floorplan\u2026');

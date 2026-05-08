@@ -39,6 +39,8 @@ urlpatterns = [
          views.tour_publish, name='tour_publish'),
     path('api/tour/<int:pk>/export/',
          views.tour_export, name='tour_export'),
+    path('api/tour/<int:pk>/import/',
+         views.tour_import, name='tour_import'),
     path('api/tour/<int:pk>/delete/',
          views.tour_delete, name='tour_delete'),
 

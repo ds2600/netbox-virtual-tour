@@ -65,6 +65,7 @@ def _tour_urls(tour):
         'url_scene_create':  f'{base}/api/tour/{tour.pk}/scene/',
         'url_publish':       f'{base}/api/tour/{tour.pk}/publish/',
         'url_export':        f'{base}/api/tour/{tour.pk}/export/',
+        'url_import':        f'{base}/api/tour/{tour.pk}/import/',
         'url_delete_tour':   f'{base}/api/tour/{tour.pk}/delete/',
         'url_scene_base':    f'{base}/api/scene/',
         'url_link_base':     f'{base}/api/scene/',
@@ -242,6 +243,89 @@ def tour_export(request, pk):
     fname = f'virtual_tour_{tour.pk}_{tour.uuid.hex[:8]}.zip'
     response['Content-Disposition'] = f'attachment; filename="{fname}"'
     return response
+
+@_require_login
+@permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
+@require_POST
+def tour_import(request, pk):
+    """Import a previously-exported zip bundle into this tour.
+    Replaces all existing scenes/links/floorplan."""
+    tour = get_object_or_404(VirtualTour, pk=pk)
+    f = request.FILES.get('bundle')
+    if not f:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+
+    try:
+        zf = zipfile.ZipFile(f)
+    except zipfile.BadZipFile:
+        return JsonResponse({'error': 'Not a valid zip file'}, status=400)
+
+    try:
+        manifest = json.loads(zf.read('tour.json').decode('utf-8'))
+    except (KeyError, json.JSONDecodeError):
+        return JsonResponse({'error': 'Bundle is missing tour.json'}, status=400)
+
+    # Wipe existing scenes/links (cascade), and the floorplan.
+    tour.scenes.all().delete()
+    if tour.floorplan:
+        tour.floorplan.delete(save=False)
+        tour.floorplan = None
+
+    # Floorplan
+    fp_name = manifest.get('floorplan_file')
+    if fp_name:
+        try:
+            from django.core.files.base import ContentFile
+            fp_bytes = zf.read(fp_name)
+            tour.floorplan.save(
+                os.path.basename(fp_name), ContentFile(fp_bytes), save=False,
+            )
+            tour.floorplan_width = manifest.get('floorplan_width', 0)
+            tour.floorplan_height = manifest.get('floorplan_height', 0)
+        except KeyError:
+            pass  # missing image, skip
+    tour.save()
+
+    # First pass: create all scenes (need IDs before creating links)
+    old_to_new = {}
+    for s in manifest.get('scenes', []):
+        from django.core.files.base import ContentFile
+        photo_bytes = zf.read(s['photo_file'])
+        scene = Scene.objects.create(
+            tour=tour,
+            name=s.get('name', 'Imported scene'),
+            floorplan_x=s.get('floorplan_x', 0.5),
+            floorplan_y=s.get('floorplan_y', 0.5),
+            floorplan_rotation=s.get('floorplan_rotation', 0.0),
+            default_yaw=s.get('default_yaw', 0.0),
+            default_pitch=s.get('default_pitch', 0.0),
+            order=s.get('order', 0),
+        )
+        scene.photo.save(
+            os.path.basename(s['photo_file']),
+            ContentFile(photo_bytes),
+            save=True,
+        )
+        old_to_new[s['id']] = scene.pk
+
+    # Second pass: create links using the new scene IDs
+    for s in manifest.get('scenes', []):
+        from_pk = old_to_new.get(s['id'])
+        if not from_pk:
+            continue
+        for link in s.get('links', []):
+            to_pk = old_to_new.get(link.get('to_scene_id'))
+            if not to_pk:
+                continue
+            SceneLink.objects.create(
+                from_scene_id=from_pk,
+                to_scene_id=to_pk,
+                yaw=link.get('yaw', 0.0),
+                pitch=link.get('pitch', 0.0),
+                label=link.get('label', ''),
+            )
+
+    return JsonResponse({'ok': True, 'scenes_imported': len(manifest.get('scenes', []))})
 
 
 # ---------------------------------------------------------------------------
