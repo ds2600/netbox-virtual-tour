@@ -2,13 +2,10 @@
 {% load static %}
 {% block title %}Edit Tour — {{ tour.parent }}{% endblock %}
 
-{% block head %}
-{{ block.super }}
+{% block content %}
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/psv-bundle.css' %}">
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/css/editor.css' %}">
-{% endblock %}
 
-{% block content %}
 <div class="editor-shell">
 
   <header class="editor-header">
@@ -128,10 +125,7 @@
 </div>
 
 {% csrf_token %}
-{% endblock %}
 
-{% block scripts %}
-{{ block.super }}
 <script src="{% static 'netbox_virtual_tour/vendor/psv-bundle.js' %}"></script>
 <script>
 window.TOUR_CONFIG = {
@@ -151,4 +145,4 @@ window.TOUR_CONFIG = {
 };
 </script>
 <script src="{% static 'netbox_virtual_tour/js/editor.js' %}"></script>
-{% endblock %}
+{% endblock content %}

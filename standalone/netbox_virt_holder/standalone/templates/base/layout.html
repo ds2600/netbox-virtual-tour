@@ -1,4 +1,3 @@
 {% extends 'base.html' %}
-{# Shim: maps NetBox block names to standalone base.html block names #}
-{% block extra_head %}{% block head %}{{ block.super }}{% endblock %}{% endblock %}
-{% block extra_body %}{% block scripts %}{{ block.super }}{% endblock %}{% endblock %}
+{# Shim: maps NetBox's base/layout.html to standalone's base.html.
+   Everything goes in 'content' in both cases. #}

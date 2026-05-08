@@ -2,8 +2,7 @@
 {% load static %}
 {% block title %}Virtual Tour — {{ tour.parent }}{% endblock %}
 
-{% block head %}
-{{ block.super }}
+{% block content %}
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/psv-bundle.css' %}">
 <style>
   #viewer {
@@ -20,9 +19,7 @@
     gap: 8px;
   }
 </style>
-{% endblock %}
 
-{% block content %}
 <div id="viewer"></div>
 <div class="viewer-toolbar">
   {% if can_edit %}
@@ -30,10 +27,7 @@
   {% endif %}
   <a class="btn btn-light btn-sm" href="{{ url_back }}">Close</a>
 </div>
-{% endblock %}
 
-{% block scripts %}
-{{ block.super }}
 <script src="{% static 'netbox_virtual_tour/vendor/psv-bundle.js' %}"></script>
 <script>
 const { Viewer, MarkersPlugin, VirtualTourPlugin, MapPlugin } = PhotoSphereViewer;
@@ -142,4 +136,4 @@ init().catch(err => {
     '<div style="color:#fff;padding:2rem;">Error: ' + err.message + '</div>';
 });
 </script>
-{% endblock %}
+{% endblock content %}

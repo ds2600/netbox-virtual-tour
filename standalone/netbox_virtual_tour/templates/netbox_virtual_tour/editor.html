@@ -3,6 +3,7 @@
 {% block title %}Edit Tour — {{ tour.parent }}{% endblock %}
 
 {% block extra_head %}
+<meta name="htmx-config" content='{"boosting":false}'>
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/bootstrap.min.css' %}">
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/psv-bundle.css' %}">
 <link rel="stylesheet" href="{% static 'netbox_virtual_tour/css/editor.css' %}">
