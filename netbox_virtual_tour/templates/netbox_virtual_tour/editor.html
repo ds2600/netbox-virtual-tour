@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Tour — {{ tour.parent }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/bootstrap.min.css' %}">
+<link rel="stylesheet" href="{% static 'netbox_virtual_tour/vendor/psv-bundle.css' %}">
+<link rel="stylesheet" href="{% static 'netbox_virtual_tour/css/editor.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="editor-shell">
+
+  <header class="editor-header">
+    <div class="d-flex align-items-center">
+      <a href="{% if tour.parent %}{{ tour.parent.get_absolute_url }}{% else %}/{% endif %}"
+         class="btn btn-sm btn-link">&larr; Back</a>
+      <h1 class="h5 mb-0 ms-2">Edit Tour: {{ tour.parent }}</h1>
+      <span id="status-pill" class="badge bg-secondary ms-2">{{ tour.get_status_display }}</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="btn-export" class="btn btn-outline-secondary btn-sm">Export Bundle</button>
+      <button id="btn-delete" class="btn btn-outline-danger btn-sm">Delete Tour</button>
+      <button id="btn-publish" class="btn btn-success btn-sm">Publish</button>
+    </div>
+  </header>
+
+  <div class="editor-body">
+
+    <aside class="editor-sidebar">
+      <div class="sidebar-section">
+        <h2 class="h6">Floorplan <span class="text-muted fw-normal">(optional)</span></h2>
+        <div id="floorplan-status" class="text-muted small mb-2">No floorplan uploaded.</div>
+        <label class="btn btn-outline-primary btn-sm w-100">
+          Upload Floorplan (PNG/JPG)
+          <input type="file" id="floorplan-upload" accept="image/png,image/jpeg" hidden>
+        </label>
+        <div class="form-text mt-1">Scenes work without a floorplan — the minimap is simply hidden in the viewer.</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0">Scenes</h2>
+          <label class="btn btn-primary btn-sm">
+            + Add Scene
+            <input type="file" id="scene-upload" accept="image/jpeg,image/png" hidden>
+          </label>
+        </div>
+        <div id="upload-progress" class="d-none mb-2">
+          <div class="progress" style="height:6px">
+            <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+          </div>
+          <div class="text-muted small mt-1" id="upload-progress-label">Uploading…</div>
+        </div>
+        <ol id="scene-list" class="scene-list"></ol>
+        <div id="scene-list-empty" class="text-muted small">Upload a 360° photo to add your first scene.</div>
+      </div>
+    </aside>
+
+    <main class="editor-main">
+      <section class="editor-section" id="floorplan-section">
+        <div class="section-header">
+          <h2 class="h6 mb-0">Floorplan</h2>
+          <div class="text-muted small">Drag markers to position each scene. The cone on each marker shows which direction the photo faces on the floorplan.</div>
+        </div>
+        <div id="floorplan-canvas-wrap">
+          <div id="floorplan-canvas" class="floorplan-canvas">
+            <div class="floorplan-empty text-muted" id="floorplan-placeholder">
+              No floorplan uploaded. You can still add scenes and link them — upload a floorplan later if needed.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="editor-section" id="scene-editor-section" style="display:none">
+        <div class="section-header">
+          <h2 class="h6 mb-0">Scene: <span id="scene-editor-name"></span></h2>
+          <div class="text-muted small">
+            Pan to the desired starting view and click <strong>Set Default View</strong>.
+            Pan to face the direction that is "up" on the floorplan and click <strong>Set Compass Direction</strong> — this aligns the minimap cone.
+            Face a doorway and click <strong>Add Link Here</strong> to create a navigation arrow.
+          </div>
+        </div>
+        <div class="scene-editor-toolbar">
+          <button id="btn-set-default-view" class="btn btn-primary btn-sm">Set Default View</button>
+          <button id="btn-set-compass" class="btn btn-outline-primary btn-sm">Set Compass Direction</button>
+          <button id="btn-add-link" class="btn btn-outline-primary btn-sm">Add Link Here</button>
+          <button id="btn-rename-scene" class="btn btn-outline-secondary btn-sm">Rename</button>
+          <button id="btn-delete-scene" class="btn btn-outline-danger btn-sm">Delete Scene</button>
+        </div>
+        <div id="psv-editor" style="position:relative;">
+          <!-- Compass-set overlay: shown while user is aiming for floorplan north -->
+          <div id="compass-aim-overlay" style="
+            display:none; position:absolute; inset:0; z-index:10;
+            pointer-events:none;
+            border: 3px solid #fd7e14;
+            border-radius:4px;
+          ">
+            <div style="
+              position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+              background:rgba(253,126,20,0.92); color:#fff; font-weight:600;
+              padding:10px 18px; border-radius:6px; font-size:14px; text-align:center;
+              pointer-events:none;
+            ">
+              Pan until you're facing the direction<br>that is <strong>"up" on the floorplan</strong>,<br>then click <strong>Confirm Direction</strong>
+            </div>
+          </div>
+        </div>
+        <div class="link-list-wrap">
+          <h3 class="h6 mb-2">Navigation Links from this scene</h3>
+          <ul id="link-list" class="link-list"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Link picker modal -->
+<div class="modal fade" id="linkPickerModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title h6">Add navigation link</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <p class="text-muted small mb-2">Choose the destination scene. The link will appear as an arrow where you were looking.</p>
+        <div id="link-picker-list" class="list-group list-group-flush mb-3"></div>
+        <label class="form-label small mb-1">Label <span class="text-muted">(optional — shown on hover)</span></label>
+        <input type="text" id="link-label-input" class="form-control form-control-sm"
+               placeholder="e.g. Server Room, Exit, Kitchen…">
+      </div>
+    </div>
+  </div>
+</div>
+
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_body %}
+<script src="{% static 'netbox_virtual_tour/vendor/psv-bundle.js' %}"></script>
+<script src="{% static 'netbox_virtual_tour/vendor/bootstrap.bundle.min.js' %}"></script>
+<script>
+window.TOUR_CONFIG = {
+  tourId: {{ tour.pk }},
+  dataUrl: '{{ data_url }}',
+  csrfToken: document.querySelector('input[name=csrfmiddlewaretoken]').value,
+  urls: {
+    floorplan: '{% url "netbox_virtual_tour:tour_floorplan_upload" pk=tour.pk %}',
+    sceneCreate: '{% url "netbox_virtual_tour:scene_create" pk=tour.pk %}',
+    publish: '{% url "netbox_virtual_tour:tour_publish" pk=tour.pk %}',
+    export: '{% url "netbox_virtual_tour:tour_export" pk=tour.pk %}',
+    deleteTour: '{% url "netbox_virtual_tour:tour_delete" pk=tour.pk %}',
+    sceneDetailBase: '/plugins/virtual-tour/api/scene/',
+    linkCreateBase: '/plugins/virtual-tour/api/scene/',
+    linkDeleteBase: '/plugins/virtual-tour/api/link/',
+  },
+};
+</script>
+<script src="{% static 'netbox_virtual_tour/js/editor.js' %}"></script>
+{% endblock %}
