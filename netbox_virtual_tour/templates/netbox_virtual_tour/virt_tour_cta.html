@@ -6,21 +6,21 @@
           Virtual Tour
         </h5>
         {% if tour and tour.is_published and can_view %}
-            <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_view' pk=tour.pk %}">
+            <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_view' pk=tour.pk %} hx-boost="false">
                 Open Virtual Tour
             </a>
             {% if can_edit %}
-                <a class="btn btn-outline-secondary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">Edit</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}" hx-boost="false">Edit</a>
             {% endif %}
         {% elif can_edit %}
             <div class="tour-cta">
             {% if tour %}
                 <span class="text-muted"Draft - not yet published.</span>
-                <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
+                <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}" hx-boost="false">
                     Continue Editing</a>
             {% else %}
                 <a class="btn btn-primary btn-sm"
-                   href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}">
+                   href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}" hx-boost="false">
                   Add Virtual Tour
                 </a>
             {% endif %}
