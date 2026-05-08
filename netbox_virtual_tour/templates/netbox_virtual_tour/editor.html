@@ -1,5 +1,5 @@
 {% extends 'base/layout.html' %}
-{% load static tour_tags %}
+{% load static %}
 {% block title %}Edit Tour — {{ tour.parent }}{% endblock %}
 
 {% block extra_head %}
@@ -146,14 +146,14 @@ window.TOUR_CONFIG = {
   dataUrl: '{{ data_url }}',
   csrfToken: document.querySelector('input[name=csrfmiddlewaretoken]').value,
   urls: {
-    floorplan: '{% tour_url "tour_floorplan_upload" pk=tour.pk %}',
-    sceneCreate: '{% tour_url "scene_create" pk=tour.pk %}',
-    publish: '{% tour_url "tour_publish" pk=tour.pk %}',
-    export: '{% tour_url "tour_export" pk=tour.pk %}',
-    deleteTour: '{% tour_url "tour_delete" pk=tour.pk %}',
-    sceneDetailBase: '{% tour_url "scene_detail" pk=0 %}'.replace('/0/', '/'),
-    linkCreateBase: '{% tour_url "link_create" pk=0 %}'.replace('/0/', '/'),
-    linkDeleteBase: '{% tour_url "link_delete" pk=0 %}'.replace('/0/', '/'),
+    floorplan: '{{ url_floorplan }}',
+    sceneCreate: '{{ url_scene_create }}',
+    publish: '{{ url_publish }}',
+    export: '{{ url_export }}',
+    deleteTour: '{{ url_delete_tour }}',
+    sceneDetailBase: '{{ url_scene_base }}',
+    linkCreateBase: '{{ url_link_base }}',
+    linkDeleteBase: '{{ url_link_delete_base }}',
   },
 };
 </script>

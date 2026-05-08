@@ -140,9 +140,18 @@ def tour_view(request, pk):
 @permission_required('netbox_virtual_tour.change_virtualtour', raise_exception=True)
 def tour_edit(request, pk):
     tour = get_object_or_404(VirtualTour, pk=pk)
+    base = f'/plugins/virtual-tour'
     return render(request, 'netbox_virtual_tour/editor.html', {
         'tour': tour,
-        'data_url': _tour_reverse('tour_api', pk=tour.pk),
+        'data_url': f'{base}/api/tour/{tour.pk}/',
+        'url_floorplan': f'{base}/api/tour/{tour.pk}/floorplan/',
+        'url_scene_create': f'{base}/api/tour/{tour.pk}/scene/',
+        'url_publish': f'{base}/api/tour/{tour.pk}/publish/',
+        'url_export': f'{base}/api/tour/{tour.pk}/export/',
+        'url_delete_tour': f'{base}/api/tour/{tour.pk}/delete/',
+        'url_scene_base': f'{base}/api/scene/',
+        'url_link_base': f'{base}/api/scene/',
+        'url_link_delete_base': f'{base}/api/link/',
     })
 
 
