@@ -227,3 +227,16 @@
   text-align: center;
   pointer-events: none;
 }
+
+/* Link-placement aim mode (green, matches link-aim-overlay) */
+#btn-add-link.aiming {
+  background: #20c997;
+  border-color: #20c997;
+  color: #fff;
+  animation: pulse-teal 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-teal {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(32,201,151,0.55); }
+  50%       { box-shadow: 0 0 0 7px rgba(32,201,151,0); }
+}

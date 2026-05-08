@@ -31,7 +31,7 @@
           Upload Floorplan (PNG/JPG)
           <input type="file" id="floorplan-upload" accept="image/png,image/jpeg" hidden>
         </label>
-        <div class="form-text mt-1">Scenes work without a floorplan — the minimap is simply hidden in the viewer.</div>
+        <div class="form-text mt-1">Upload a floorplan, it should be at least 1000px in the longest direction. Optional.</div>
       </div>
 
       <div class="sidebar-section">
@@ -57,7 +57,7 @@
       <section class="editor-section" id="floorplan-section">
         <div class="section-header">
           <h2 class="h6 mb-0">Floorplan</h2>
-          <div class="text-muted small">Drag markers to position each scene. The cone shows which direction the photo faces.</div>
+          <div class="text-muted small">Drag markers to position each scene.</div>
         </div>
         <div id="floorplan-canvas-wrap">
           <div id="floorplan-canvas" class="floorplan-canvas">
@@ -74,7 +74,7 @@
           <div class="text-muted small">
             Pan to desired starting view → <strong>Set Default View</strong>.
             Face floorplan "up" direction → <strong>Set Compass Direction</strong>.
-            Face a doorway → <strong>Add Link Here</strong>.
+            Face the next photo location → <strong>Add Link Here</strong>.
           </div>
         </div>
         <div class="scene-editor-toolbar">
@@ -101,6 +101,15 @@
               then click <strong>Confirm View</strong>
             </div>
           </div>
+        <div id="link-aim-overlay" style="display:none; position:absolute; inset:0; z-index:10;
+             pointer-events:none; border:3px solid #20c997; border-radius:4px;">
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                      background:rgba(32,201,151,0.95); color:#fff; font-weight:600;
+                      padding:10px 18px; border-radius:6px; font-size:14px; text-align:center; pointer-events:none;">
+            Pan to position the link arrow,<br>
+            then click <strong>Confirm Link Position</strong>
+          </div>
+        </div>
         </div>
         <div class="link-list-wrap">
           <h3 class="h6 mb-2">Navigation Links from this scene</h3>
@@ -111,21 +120,24 @@
   </div>
 </div>
 
-<!-- Link picker modal -->
-<div class="modal fade" id="linkPickerModal" tabindex="-1">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      <div class="modal-header py-2">
-        <h5 class="modal-title h6">Add navigation link</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-2">
-        <p class="text-muted small mb-2">Choose the destination. The arrow appears where you were looking.</p>
-        <div id="link-picker-list" class="list-group list-group-flush mb-3"></div>
-        <label class="form-label small mb-1">Label <span class="text-muted">(optional)</span></label>
-        <input type="text" id="link-label-input" class="form-control form-control-sm"
-               placeholder="e.g. Server Room, Exit, Kitchen…">
-      </div>
+<!-- Link picker overlay (no Bootstrap modal) -->
+<div id="linkPickerOverlay" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.5);">
+  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+              background: var(--bs-body-bg); color: var(--bs-body-color);
+              border:1px solid var(--bs-border-color); border-radius:6px;
+              width: 360px; max-width: 90vw; padding: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.4);">
+    <div style="padding: 0.5rem 0.75rem; border-bottom:1px solid var(--bs-border-color);
+                display:flex; justify-content:space-between; align-items:center;">
+      <strong>Add navigation link</strong>
+      <button type="button" id="link-picker-close" class="btn-close" aria-label="Close"></button>
+    </div>
+    <div style="padding: 0.75rem;">
+      <p class="text-muted small mb-2">Choose the destination. You'll then be able to position the arrow exactly where you want it.</p>
+      <div id="link-picker-list" class="list-group list-group-flush mb-3"
+           style="max-height: 240px; overflow-y: auto; border:1px solid var(--bs-border-color); border-radius:4px;"></div>
+      <label class="form-label small mb-1">Label <span class="text-muted">(optional, shown on hover)</span></label>
+      <input type="text" id="link-label-input" class="form-control form-control-sm"
+             placeholder="e.g. Server Room, Exit, Kitchen…">
     </div>
   </div>
 </div>

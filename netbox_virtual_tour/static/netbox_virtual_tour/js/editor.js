@@ -17,6 +17,9 @@
     pendingLinkPosition: null,
     compassAiming: false,
     defaultViewAiming: false,
+    linkAiming: false,
+    pendingLinkTarget: null,
+    livePreviewLinkId: null,
   };
 
   // ---- helpers ----
@@ -66,17 +69,8 @@
   }
 
   // ---- modal ----
-    let _linkModal = null;
-    function getLinkModal() {
-      // bootstrap is exposed by NetBox as window.bootstrap. Guard against it being missing.
-      const bs = window.bootstrap;
-      if (!bs || !bs.Modal) {
-        toast('Bootstrap not loaded — link picker unavailable', true);
-        return null;
-      }
-      if (!_linkModal) _linkModal = new bs.Modal(qs('#linkPickerModal'));
-      return _linkModal;
-    }
+    function showLinkPicker() { qs('#linkPickerOverlay').style.display = ''; }
+    function hideLinkPicker() { qs('#linkPickerOverlay').style.display = 'none'; }
 
   // ---- init ----
   async function init() {
@@ -304,10 +298,12 @@
     updateCompassButton();
   }
 
-  function destroyPsv() {
-    if (state.psvViewer) { state.psvViewer.destroy(); state.psvViewer = null; state.psvMarkers = null; }
-    cancelCompassAim();
-  }
+    function destroyPsv() {
+      cancelLinkAim();
+      cancelCompassAim();
+      if (state.defaultViewAiming) cancelDefaultViewAim();
+      if (state.psvViewer) { state.psvViewer.destroy(); state.psvViewer = null; state.psvMarkers = null; }
+    }
 
   function refreshLinkMarkers() {
     if (!state.psvMarkers) return;
@@ -420,56 +416,126 @@
       toast('Default view saved');
     }
 
-  function addLinkAtCurrentView() {
-    const scene = getScene(state.selectedSceneId);
-    if (!scene || !state.psvViewer) return;
-    // Cancel compass aiming if active
-    if (state.compassAiming) cancelCompassAim();
-    if (state.defaultViewAiming) cancelDefaultViewAim();
-    const others = state.tour.scenes.filter(function (s) {
-      return String(s.id) !== String(scene.id);
-    });
-    if (!others.length) { toast('Add another scene first', true); return; }
-    state.pendingLinkPosition = state.psvViewer.getPosition();
-    qs('#link-label-input').value = '';
-    const list = qs('#link-picker-list');
-    list.innerHTML = '';
-    others.forEach(function (s) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'list-group-item list-group-item-action';
-      btn.textContent = s.name;
-        btn.addEventListener('click', function () {
-          const m = getLinkModal();
-          if (m) m.hide();
-          confirmLink(s.id);
-        });
-      list.appendChild(btn);
-    });
-    const m = getLinkModal();
-    if (m) m.show();
-  }
+    // Step 1: open the picker (destination + optional label)
+    function addLinkAtCurrentView() {
+      const scene = getScene(state.selectedSceneId);
+      if (!scene || !state.psvViewer) return;
+      if (state.compassAiming) cancelCompassAim();
+      if (state.defaultViewAiming) cancelDefaultViewAim();
+      if (state.linkAiming) cancelLinkAim();
 
-  async function confirmLink(targetSceneId) {
-    const scene = getScene(state.selectedSceneId);
-    const pos = state.pendingLinkPosition;
-    if (!scene || !pos) return;
-    const label = (qs('#link-label-input').value || '').trim();
-    try {
-      const result = await api(cfg.urls.linkCreateBase + scene.id + '/link/', {
-        method: 'POST',
-        jsonBody: { to_scene_id: targetSceneId, yaw: pos.yaw, pitch: pos.pitch, label: label },
+      const others = state.tour.scenes.filter(function (s) {
+        return String(s.id) !== String(scene.id);
       });
-      scene.links = scene.links.filter(function (l) {
-        return String(l.to_scene_id) !== String(targetSceneId);
+      if (!others.length) { toast('Add another scene first', true); return; }
+
+      qs('#link-label-input').value = '';
+      const list = qs('#link-picker-list');
+      list.innerHTML = '';
+      others.forEach(function (s) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'list-group-item list-group-item-action';
+        btn.textContent = s.name;
+        btn.addEventListener('click', function () {
+          const label = (qs('#link-label-input').value || '').trim();
+          hideLinkPicker();
+          startLinkAim(s.id, s.name, label);
+        });
+        list.appendChild(btn);
       });
-      scene.links.push({ _id: result.id, to_scene_id: targetSceneId, yaw: pos.yaw, pitch: pos.pitch, label: label });
-      refreshLinkMarkers();
-      renderLinkList();
-      toast('Link added' + (label ? ': \u201c' + label + '\u201d' : ''));
-    } catch (err) { toast(err.message, true); }
-    state.pendingLinkPosition = null;
+      showLinkPicker();
+    }
+
+    // Step 2: enter aim mode — show a live arrow that follows the camera direction
+    function startLinkAim(targetSceneId, targetName, label) {
+      state.linkAiming = true;
+      state.pendingLinkTarget = { to_scene_id: targetSceneId, name: targetName, label: label };
+
+      const btn = qs('#btn-add-link');
+      btn.textContent = 'Confirm Link Position';
+      btn.classList.add('aiming');
+      qs('#link-aim-overlay').style.display = '';
+
+      // Add a live-preview marker at the current camera centre
+      if (state.psvMarkers) {
+        state.livePreviewLinkId = 'link-preview';
+        const pos = state.psvViewer.getPosition();
+        state.psvMarkers.addMarker({
+          id: state.livePreviewLinkId,
+          position: { yaw: pos.yaw, pitch: pos.pitch },
+          html: '<div class="psv-link-marker" style="background:rgba(32,201,151,0.95);">\u2192 ' + targetName + '</div>',
+          anchor: 'center center',
+        });
+        // Move the marker every time the camera moves so it appears centred
+        state.psvViewer.addEventListener('position-updated', linkAimPositionListener);
+      }
+    }
+
+// Listener that re-positions the live preview marker as the camera pans
+function linkAimPositionListener(e) {
+  if (!state.linkAiming || !state.psvMarkers || !state.livePreviewLinkId) return;
+  state.psvMarkers.updateMarker({
+    id: state.livePreviewLinkId,
+    position: { yaw: e.position.yaw, pitch: e.position.pitch },
+  });
+}
+
+function cancelLinkAim() {
+  state.linkAiming = false;
+  state.pendingLinkTarget = null;
+  const btn = qs('#btn-add-link');
+  if (btn) {
+    btn.textContent = 'Add Link Here';
+    btn.classList.remove('aiming');
   }
+  const ov = qs('#link-aim-overlay');
+  if (ov) ov.style.display = 'none';
+  if (state.psvViewer) {
+    try { state.psvViewer.removeEventListener('position-updated', linkAimPositionListener); } catch (_) {}
+  }
+  if (state.psvMarkers && state.livePreviewLinkId) {
+    try { state.psvMarkers.removeMarker(state.livePreviewLinkId); } catch (_) {}
+  }
+  state.livePreviewLinkId = null;
+}
+
+// Step 3: confirm — save link with current camera position
+async function confirmLinkPlacement() {
+  if (!state.linkAiming || !state.psvViewer || !state.pendingLinkTarget) {
+    cancelLinkAim();
+    return;
+  }
+  const scene = getScene(state.selectedSceneId);
+  if (!scene) { cancelLinkAim(); return; }
+  const pos = state.psvViewer.getPosition();
+  const target = state.pendingLinkTarget;
+
+  try {
+    const result = await api(cfg.urls.linkCreateBase + scene.id + '/link/', {
+      method: 'POST',
+      jsonBody: {
+        to_scene_id: target.to_scene_id,
+        yaw: pos.yaw, pitch: pos.pitch,
+        label: target.label || '',
+      },
+    });
+    scene.links = scene.links.filter(function (l) {
+      return String(l.to_scene_id) !== String(target.to_scene_id);
+    });
+    scene.links.push({
+      _id: result.id, to_scene_id: target.to_scene_id,
+      yaw: pos.yaw, pitch: pos.pitch, label: target.label || '',
+    });
+    cancelLinkAim();           // tears down preview marker
+    refreshLinkMarkers();      // adds the saved one
+    renderLinkList();
+    toast('Link added' + (target.label ? ': \u201c' + target.label + '\u201d' : ''));
+  } catch (err) {
+    toast(err.message, true);
+    cancelLinkAim();
+  }
+}
 
   async function renameScene() {
     const scene = getScene(state.selectedSceneId);
@@ -590,14 +656,20 @@
       } catch (err) { toast(err.message, true); }
       finally { hideProgress(); e.target.value = ''; }
     });
-
+    qs('#btn-add-link').addEventListener('click', function () {
+      if (state.linkAiming) {
+        confirmLinkPlacement().catch(function (err) { toast(err.message, true); });
+      } else {
+        addLinkAtCurrentView();
+      }
+    });
     qs('#btn-set-default-view').addEventListener('click', function () {
       handleDefaultViewClick().catch(function (err) { toast(err.message, true); });
     });
     qs('#btn-set-compass').addEventListener('click', function () {
       handleCompassClick().catch(function (err) { toast(err.message, true); });
     });
-    qs('#btn-add-link').addEventListener('click', addLinkAtCurrentView);
+
     qs('#btn-rename-scene').addEventListener('click', function () {
       renameScene().catch(function (err) { toast(err.message, true); });
     });
@@ -610,6 +682,11 @@
     qs('#btn-export').addEventListener('click', function () { window.location.href = cfg.urls.export; });
     qs('#btn-delete').addEventListener('click', function () {
       deleteTour().catch(function (err) { toast(err.message, true); });
+    });
+    qs('#link-picker-close').addEventListener('click', hideLinkPicker);
+    qs('#linkPickerOverlay').addEventListener('click', function (e) {
+      // Click outside the inner card to dismiss
+      if (e.target === this) hideLinkPicker();
     });
 
     window.addEventListener('resize', function () {
