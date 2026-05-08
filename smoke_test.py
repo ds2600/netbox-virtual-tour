@@ -1,10 +1,3 @@
-"""End-to-end smoke test for the virtual tour plugin.
-
-Uses Django's test client (not a real browser) so we can verify
-the backend flows work without dealing with subprocess management.
-This isn't a real test suite — it's a sanity check before
-packaging.
-"""
 import io
 import json
 import os

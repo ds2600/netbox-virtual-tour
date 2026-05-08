@@ -14,10 +14,9 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/YOUR_USERNAME/netbox-virtual-tour"
+Repository = "https://github.com/ds2600/netbox-virtual-tour"
 
 [tool.setuptools.packages.find]
-# Only package the plugin itself, not standalone/ or smoke_test.py
 include = ["netbox_virtual_tour*"]
 
 [tool.setuptools.package-data]
