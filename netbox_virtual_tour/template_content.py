@@ -27,7 +27,7 @@ class _TourCtaMixin:
             object_id=obj.pk,
         ).first()
         return self.render(
-            'netbox_virtual_tour/_tour_cta.html',
+            'netbox_virtual_tour/virt_tour_cta.html',
             extra_context={
                 'tour': tour,
                 'tour_parent_ct': ct,
