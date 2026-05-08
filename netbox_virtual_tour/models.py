@@ -83,10 +83,10 @@ class VirtualTour(models.Model):
         return self.published_data is not None
 
     def get_absolute_url(self):
-        return reverse('netbox_virtual_tour:tour_view', kwargs={'pk': self.pk})
+        return reverse('plugins:netbox_virtual_tour:tour_view', kwargs={'pk': self.pk})
 
     def get_editor_url(self):
-        return reverse('netbox_virtual_tour:tour_edit', kwargs={'pk': self.pk})
+        return reverse('plugins:netbox_virtual_tour:tour_edit', kwargs={'pk': self.pk})
 
     def build_published_snapshot(self):
         """Serialize the current state of scenes/links into a
