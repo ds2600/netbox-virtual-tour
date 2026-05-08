@@ -1,12 +1,18 @@
 """URL routes for the virtual tour plugin.
 
-Mounted at /plugins/virtual-tour/ in both standalone and NetBox modes.
+Mounted at /plugins/virtual-tour/ in NetBox, /plugins/virtual-tour/
+in standalone (see standalone/urls.py).
+
+NOTE: No app_name here. In NetBox mode, NetBox's plugin loader sets
+the namespace to the plugin's `name` ('netbox_virtual_tour') when it
+calls include(). Defining app_name here as well causes a namespace
+conflict that produces "not a registered namespace" errors.
+In standalone mode, the namespace is set explicitly in standalone/urls.py
+via include(..., namespace='netbox_virtual_tour').
 """
 from django.urls import path
 
 from . import views
-
-app_name = 'netbox_virtual_tour'
 
 urlpatterns = [
     # Editor entry point — creates a new tour for a Site/Location

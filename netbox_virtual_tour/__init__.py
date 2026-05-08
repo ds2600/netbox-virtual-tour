@@ -33,6 +33,9 @@ else:
             base_url = 'virtual-tour'
             min_version = '4.0.0'
             default_settings = {}
+            # Tell NetBox which file contains the PluginTemplateExtension
+            # classes that inject the tour CTA into Site/Location pages.
+            template_extensions = 'netbox_virtual_tour.template_content'
 
         config = NetBoxVirtualTourConfig
     except ImportError:

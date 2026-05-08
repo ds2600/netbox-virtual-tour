@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Scene, SceneLink, VirtualTour
+from .models import VirtualTour
 
 
 @admin.register(VirtualTour)
@@ -9,13 +9,8 @@ class VirtualTourAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     readonly_fields = ('uuid', 'published_data', 'created', 'last_updated')
 
-
-@admin.register(Scene)
-class SceneAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'tour', 'order')
-    list_filter = ('tour',)
-
-
-@admin.register(SceneLink)
-class SceneLinkAdmin(admin.ModelAdmin):
-    list_display = ('id', 'from_scene', 'to_scene', 'label')
+# Scene and SceneLink are NOT registered with admin.
+# They are implementation details managed entirely through the
+# plugin's own editor UI. Exposing them in Django admin would
+# allow data to be created in a broken state (e.g. scenes without
+# photos, links with invalid yaw values).

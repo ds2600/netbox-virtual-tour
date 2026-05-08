@@ -151,9 +151,10 @@ window.TOUR_CONFIG = {
     publish: '{% url "netbox_virtual_tour:tour_publish" pk=tour.pk %}',
     export: '{% url "netbox_virtual_tour:tour_export" pk=tour.pk %}',
     deleteTour: '{% url "netbox_virtual_tour:tour_delete" pk=tour.pk %}',
-    sceneDetailBase: '/plugins/virtual-tour/api/scene/',
-    linkCreateBase: '/plugins/virtual-tour/api/scene/',
-    linkDeleteBase: '/plugins/virtual-tour/api/link/',
+    // These use a base + id pattern — we pass sentinel URLs and strip the trailing segment in JS
+    sceneDetailBase: '{% url "netbox_virtual_tour:scene_detail" pk=0 %}'.replace('/0/', '/'),
+    linkCreateBase: '{% url "netbox_virtual_tour:link_create" pk=0 %}'.replace('/0/', '/'),
+    linkDeleteBase: '{% url "netbox_virtual_tour:link_delete" pk=0 %}'.replace('/0/', '/'),
   },
 };
 </script>
