@@ -5,6 +5,7 @@ __pycache__/
 dist/
 build/
 .eggs/
+.venv/
 
 # Standalone dev artifacts — don't commit these
 standalone/db.sqlite3
