@@ -1,6 +1,6 @@
 {% load tour_tags %}
 {% with can_view=perms.netbox_virtual_tour.view_virtualtour can_edit=perms.netbox_virtual_tour.change_virtualtour %}
-  {% if tour and tour.is_published and can_view %}
+  {% if tour and tour.is_published and can_view  or can_edit %}
     <div class="tour-cta">
       <strong>Virtual Tour available.</strong>
       <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_view' pk=tour.pk %}">
@@ -14,19 +14,19 @@
     </div>
   {% elif can_edit %}
     <div class="tour-cta">
-      {% if tour %}
-        <strong>Virtual Tour (Draft).</strong>
-        <span class="text-muted small">Not yet published — only editors can see it.</span>
-        <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
-          Continue Editing
-        </a>
-      {% else %}
-        <strong>No Virtual Tour yet.</strong>
-        <a class="btn btn-primary btn-sm"
-           href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}">
-          Add Virtual Tour
-        </a>
-      {% endif %}
+        {% if tour %}
+            <strong>Virtual Tour (Draft).</strong>
+            <span class="text-muted small">Not yet published — only editors can see it.</span>
+            <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
+              Continue Editing
+            </a>
+          {% else %}
+            <strong>No Virtual Tour yet.</strong>
+            <a class="btn btn-primary btn-sm"
+               href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}">
+              Add Virtual Tour
+            </a>
+       {% endif %}
     </div>
   {% endif %}
 {% endwith %}
