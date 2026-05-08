@@ -9,12 +9,25 @@ description = "360-degree virtual tours for NetBox Sites and Locations"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
+authors = [
+    { name = "ds2600", email = "ds2600@ds2600.com" }
+]
+keywords = ["netbox", "virtual tour", "360", "panorama"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Framework :: Django",
+    "Topic :: System :: Networking",
+]
+
 dependencies = [
     "Pillow>=10.0",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ds2600/netbox-virtual-tour"
+Homepage = "https://github.com/ds2600/netbox-virtual-tour"
+Repository = "https://github.com/ds2600/netbox-virtual-tour"
+"Bug Tracker" = "https://github.com/ds2600/netbox-virtual-tour/issues"
 
 [tool.setuptools.packages.find]
 include = ["netbox_virtual_tour*"]

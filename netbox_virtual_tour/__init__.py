@@ -6,7 +6,8 @@ try:
         verbose_name = 'NetBox Virtual Tour'
         description = '360-degree virtual tours for Sites and Locations'
         version = '0.1.0'
-        author = 'William Bunce'
+        author = 'ds2600'
+        author_email = 'ds2600@ds2600.com'
         base_url = 'virtual-tour'
         min_version = '4.0.0'
         default_settings = {}
