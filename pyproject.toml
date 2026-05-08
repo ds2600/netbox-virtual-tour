@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/ds2600/netbox-virtual-tour"
+"Homepage" = "https://github.com/ds2600/netbox-virtual-tour"
 
 [tool.setuptools.packages.find]
 include = ["netbox_virtual_tour*"]
