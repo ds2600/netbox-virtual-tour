@@ -1,33 +1,32 @@
 {% load tour_tags %}
 {% with can_view=perms.netbox_virtual_tour.view_virtualtour can_edit=perms.netbox_virtual_tour.change_virtualtour %}
-  {% if tour and tour.is_published and can_view %}
-    <div class="tour-cta">
-      <strong>Virtual Tour available.</strong>
-      <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_view' pk=tour.pk %}">
-        Open Virtual Tour
-      </a>
-      {% if can_edit %}
-        <a class="btn btn-outline-secondary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
-          Edit
-        </a>
-      {% endif %}
+  {% if tour and tour.is_published and can_view or can_edit %}
+    <div class="card">
+        <h5 class="card-header">
+          Virtual Tour
+        </h5>
+        {% if tour and tour.is_published and can_view %}
+            <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_view' pk=tour.pk %}">
+                Open Virtual Tour
+            </a>
+            {% if can_edit %}
+                <a class="btn btn-outline-secondary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">Edit</a>
+            {% endif %}
+        {% elif can_edit %}
+            <div class="tour-cta">
+            {% if tour %}
+                <span class="text-muted"Draft - not yet published.</span>
+                <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
+                    Continue Editing</a>
+            {% else %}
+                <a class="btn btn-primary btn-sm"
+                   href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}">
+                  Add Virtual Tour
+                </a>
+            {% endif %}
+          {% endif %}
     </div>
-  {% elif can_edit %}
-    <div class="tour-cta">
-      {% if tour %}
-        <strong>Virtual Tour (Draft).</strong>
-        <span class="text-muted small">Not yet published — only editors can see it.</span>
-        <a class="btn btn-primary btn-sm" href="{% tour_url 'tour_edit' pk=tour.pk %}">
-          Continue Editing
-        </a>
-      {% else %}
-        <strong>No Virtual Tour yet.</strong>
-        <a class="btn btn-primary btn-sm"
-           href="{% tour_url 'tour_edit_for_object' object_type=tour_parent_ct.model object_id=tour_parent_id %}">
-          Add Virtual Tour
-        </a>
-      {% endif %}
     </div>
-  {% endif %}
+{% endif %}
 {% endwith %}
 
