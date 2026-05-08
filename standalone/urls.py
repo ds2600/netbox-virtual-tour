@@ -9,8 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dcim/', include('stub_dcim.urls')),
     path('plugins/virtual-tour/',
-         include(('netbox_virtual_tour.urls', 'netbox_virtual_tour'),
-                 namespace='netbox_virtual_tour')),
+         include('netbox_virtual_tour.urls')),
 ]
 
 if settings.DEBUG:

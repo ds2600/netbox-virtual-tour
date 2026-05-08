@@ -14,6 +14,8 @@ from django.urls import path
 
 from . import views
 
+app_name = 'netbox_virtual_tour'
+
 urlpatterns = [
     # Editor entry point — creates a new tour for a Site/Location
     # if none exists, or opens the editor for the existing one.

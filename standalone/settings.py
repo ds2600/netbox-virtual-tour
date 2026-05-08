@@ -35,8 +35,9 @@ INSTALLED_APPS = [
 
     'rest_framework',
 
-    # The plugin itself.
-    'netbox_virtual_tour',
+    # The plugin — loaded via StandaloneAppConfig so it doesn't try
+    # to import netbox.plugins (which isn't installed in standalone mode).
+    'netbox_virtual_tour.apps.StandaloneAppConfig',
 
     # Stub DCIM app — only installed in standalone mode.
     'stub_dcim',
