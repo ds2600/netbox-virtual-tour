@@ -37,10 +37,10 @@ class _TourCtaMixin:
 
 
 class SiteTourCta(_TourCtaMixin, PluginTemplateExtension):
-    models = 'dcim.site'
+    model = 'dcim.site'
 
 
 class LocationTourCta(_TourCtaMixin, PluginTemplateExtension):
-    models = 'dcim.location'
+    model = 'dcim.location'
 
 template_extensions = (SiteTourCta, LocationTourCta)
